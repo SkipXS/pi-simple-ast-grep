@@ -67,6 +67,16 @@ rule:
   pattern: assertEquals($EXPECTED, $ACTUAL)
 ```
 
+## Large result handoff
+
+When ast-grep returns more items than the context preview limit, the tools keep a short preview and save the complete parsed JSON array in the workspace:
+
+- `ast_grep_search` over 50 matches → `.pi-ast-grep-search-results.json`
+- `ast_grep_scan` over 20 violations → `.pi-ast-grep-scan-results.json`
+- `ast_grep_rewrite` over 30 rewrites → `.pi-ast-grep-rewrite-results.json`
+
+Use `read_file` or `ctx_execute` on the saved file when complete result analysis is needed.
+
 ## Package layout
 
 - `extensions/pi-simple-ast-grep.ts` — package extension entrypoint.

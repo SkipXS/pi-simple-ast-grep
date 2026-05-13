@@ -15,7 +15,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { spawn } from "node:child_process";
-import { access, constants } from "node:fs/promises";
+import { access, constants, writeFile } from "node:fs/promises";
 import { relative, resolve, dirname, join, isAbsolute } from "node:path";
 import { homedir, platform } from "node:os";
 
@@ -111,7 +111,7 @@ function execAsync(
   args: string[],
   opts: { cwd?: string; timeout?: number; maxOutput?: number; signal?: AbortSignal } = {},
 ): Promise<{ stdout: string; stderr: string; code: number }> {
-  const { cwd, timeout, maxOutput = 100_000, signal } = opts;
+  const { cwd, timeout, maxOutput = 5_000_000, signal } = opts;
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(new Error("Command aborted"));
@@ -187,6 +187,13 @@ function truncateText(text: string, maxBytes: number): string {
   return truncated + "\n\n[...truncated]";
 }
 
+function appendHandoffMessage(text: string, message: string, maxBytes: number): string {
+  const suffix = `\n\n${message}`;
+  const suffixBytes = Buffer.byteLength(suffix, "utf-8");
+  const previewBytes = Math.max(1_000, maxBytes - suffixBytes);
+  return `${truncateText(text, previewBytes)}${suffix}`;
+}
+
 function formatSgFailure(action: string, code: number, stdout: string, stderr: string): string {
   return truncateText(
     `ast-grep ${action} failed (exit ${code}):\n${stderr || stdout || "unknown error"}`,
@@ -210,6 +217,12 @@ function parseJsonArrayOutput(stdout: string): { parsed: unknown[]; parseFailed:
       return { parsed: [], parseFailed: true };
     }
   }
+}
+
+async function saveFullResults(cwd: string, fileName: string, results: unknown[]): Promise<string> {
+  const filePath = join(cwd, fileName);
+  await writeFile(filePath, JSON.stringify(results, null, 2), "utf-8");
+  return filePath;
 }
 
 /** Find sgconfig.yml walking up from a directory. */
@@ -400,13 +413,21 @@ export default function piSimpleAstGrepExtension(pi: ExtensionAPI) {
           if (text) outputLines.push(`    ${text}`);
         }
 
+        let handoffMessage: string | undefined;
         if (parsed.length > 50) {
-          outputLines.push(
-            `  ... and ${parsed.length - 50} more matches (use glob to narrow)`,
+          const fullResultsPath = await saveFullResults(
+            ctx.cwd,
+            ".pi-ast-grep-search-results.json",
+            parsed,
           );
+          handoffMessage = `Full results saved to ${fullResultsPath}. Use read_file or ctx_execute to analyze the complete JSON output.`;
+          outputLines.push(`  ... and ${parsed.length - 50} more matches (use glob to narrow)`);
         }
 
-        const result = truncateText(outputLines.join("\n"), 40_000);
+        const preview = outputLines.join("\n");
+        const result = handoffMessage
+          ? appendHandoffMessage(preview, handoffMessage, 40_000)
+          : truncateText(preview, 40_000);
 
         return {
           content: [{ type: "text", text: result }],
@@ -574,14 +595,24 @@ export default function piSimpleAstGrepExtension(pi: ExtensionAPI) {
           summary.push(`  ${file}:${line}  [${ruleId}] ${message}`);
         }
 
+        let handoffMessage: string | undefined;
         if (violations.length > 20) {
+          const fullResultsPath = await saveFullResults(
+            ctx.cwd,
+            ".pi-ast-grep-scan-results.json",
+            violations,
+          );
+          handoffMessage = `Full results saved to ${fullResultsPath}. Use read_file or ctx_execute to analyze the complete JSON output.`;
           summary.push(`  ... and ${violations.length - 20} more`);
         }
 
         const action = params.applyFixes
           ? "Scan with auto-fix applied. Remaining violations:"
           : "Scan results:";
-        const result = truncateText(`${action}\n${summary.join("\n")}`, 40_000);
+        const preview = `${action}\n${summary.join("\n")}`;
+        const result = handoffMessage
+          ? appendHandoffMessage(preview, handoffMessage, 40_000)
+          : truncateText(preview, 40_000);
 
         return {
           content: [{ type: "text", text: result }],
@@ -728,11 +759,21 @@ export default function piSimpleAstGrepExtension(pi: ExtensionAPI) {
           outputLines.push("");
         }
 
+        let handoffMessage: string | undefined;
         if (parsed.length > 30) {
+          const fullResultsPath = await saveFullResults(
+            ctx.cwd,
+            ".pi-ast-grep-rewrite-results.json",
+            parsed,
+          );
+          handoffMessage = `Full results saved to ${fullResultsPath}. Use read_file or ctx_execute to analyze the complete JSON output.`;
           outputLines.push(`  ... and ${parsed.length - 30} more rewrites`);
         }
 
-        const result = truncateText(outputLines.join("\n"), 40_000);
+        const preview = outputLines.join("\n");
+        const result = handoffMessage
+          ? appendHandoffMessage(preview, handoffMessage, 40_000)
+          : truncateText(preview, 40_000);
 
         return {
           content: [{ type: "text", text: result }],
