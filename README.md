@@ -24,19 +24,23 @@ The extension discovers `sg`, `ast-grep`, Windows npm shims, and installed packa
 
 ## Install in pi
 
-Use as a local package:
+Install from GitHub:
 
 ```bash
-pi install /absolute/path/to/pi-simple-ast-grep
+pi install git:github.com/SkipXS/pi-simple-ast-grep
 ```
 
-Or test without installing:
+Or project-local (`.pi/`):
+
+```bash
+pi install -l git:github.com/SkipXS/pi-simple-ast-grep
+```
+
+Test without installing:
 
 ```bash
 pi -e ./extensions/pi-simple-ast-grep.ts
 ```
-
-Project-local development works from `.pi/extensions/pi-simple-ast-grep.ts` and `.pi/skills/pi-simple-ast-grep/SKILL.md`.
 
 ## Usage examples
 
