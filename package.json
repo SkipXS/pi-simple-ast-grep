@@ -1,0 +1,17 @@
+{
+  "name": "pi-simple-ast-grep",
+  "version": "1.0.0",
+  "description": "Simple pi skill + extension for structural code search, linting, and rewriting with ast-grep",
+  "keywords": ["pi-package", "pi-simple-ast-grep", "ast-grep", "code-search", "refactoring", "linting"],
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./extensions/pi-simple-ast-grep.ts"],
+    "skills": ["./SKILL.md"],
+    "image": "https://raw.githubusercontent.com/ast-grep/ast-grep/main/logo.svg"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*",
+    "typebox": "*"
+  }
+}
