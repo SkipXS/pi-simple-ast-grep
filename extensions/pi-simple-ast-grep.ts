@@ -15,7 +15,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { spawn } from "node:child_process";
-import { access, constants, writeFile } from "node:fs/promises";
+import { access, constants, mkdir, writeFile } from "node:fs/promises";
 import { relative, resolve, dirname, join, isAbsolute } from "node:path";
 import { homedir, platform } from "node:os";
 
@@ -220,7 +220,9 @@ function parseJsonArrayOutput(stdout: string): { parsed: unknown[]; parseFailed:
 }
 
 async function saveFullResults(cwd: string, fileName: string, results: unknown[]): Promise<string> {
-  const filePath = join(cwd, fileName);
+  const outputDir = join(cwd, ".pi", "extensions");
+  await mkdir(outputDir, { recursive: true });
+  const filePath = join(outputDir, fileName);
   await writeFile(filePath, JSON.stringify(results, null, 2), "utf-8");
   return filePath;
 }

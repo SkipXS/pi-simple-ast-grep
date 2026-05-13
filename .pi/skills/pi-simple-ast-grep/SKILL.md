@@ -101,4 +101,4 @@ npm install -g @ast-grep/cli
 2. **Be specific with language**: Always set `language` when the file extension is ambiguous or you're searching across mixed-language projects.
 3. **Use `glob` to scope searches**: Narrow searches to `src/**/*.ts` or `lib/**/*.py` for faster results.
 4. **Inline rules for one-offs**: Use `inlineRules` in `ast_grep_scan` to define quick lint checks without creating files.
-5. **Use saved JSON for large results**: If previews exceed limits, complete arrays are saved to `.pi-ast-grep-search-results.json`, `.pi-ast-grep-scan-results.json`, or `.pi-ast-grep-rewrite-results.json` in the workspace. Analyze them with `read_file` or `ctx_execute`.
+5. **Use saved JSON for large results**: If previews exceed limits, complete arrays are saved to `.pi/extensions/.pi-ast-grep-search-results.json`, `.pi/extensions/.pi-ast-grep-scan-results.json`, or `.pi/extensions/.pi-ast-grep-rewrite-results.json` in the project workspace. Analyze them with `read_file` or `ctx_execute`.
